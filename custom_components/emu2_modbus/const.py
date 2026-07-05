@@ -205,6 +205,7 @@ DEFAULT_SENSORS: list[dict[str, object]] = [
         "swap": "word",
         "scan_interval": 10,
         "state_class": "measurement",
+        "scale": 1.0,
         "precision": 3,
     },
     {
@@ -216,6 +217,7 @@ DEFAULT_SENSORS: list[dict[str, object]] = [
         "swap": "word",
         "scan_interval": 10,
         "state_class": "measurement",
+        "scale": 1.0,
         "precision": 3,
     },
     {
@@ -227,6 +229,7 @@ DEFAULT_SENSORS: list[dict[str, object]] = [
         "swap": "word",
         "scan_interval": 10,
         "state_class": "measurement",
+        "scale": 1.0,
         "precision": 3,
     },
     {
@@ -240,6 +243,7 @@ DEFAULT_SENSORS: list[dict[str, object]] = [
         "unit_of_measurement": "Hz",
         "device_class": "frequency",
         "state_class": "measurement",
+        "scale": 1.0,
         "precision": 3,
     },
 ]

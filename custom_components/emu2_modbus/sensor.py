@@ -41,6 +41,10 @@ REGISTER_COUNTS = {
     "float32": 2,
     "uint64": 4,
 }
+DATA_DECODERS = {
+    "float32": lambda payload: struct.unpack(">f", payload)[0],
+    "uint64": lambda payload: float(struct.unpack(">Q", payload)[0]),
+}
 
 
 type Emu2ConfigEntry = ConfigEntry[dict[str, Any]]
@@ -237,10 +241,10 @@ class Emu2ModbusSensor(SensorEntity):
 
         payload = b"".join(struct.pack(">H", register) for register in registers)
 
-        if self._def.data_type == "float32":
-            raw_value = struct.unpack(">f", payload)[0]
-        else:
-            raw_value = float(struct.unpack(">Q", payload)[0])
+        try:
+            raw_value = DATA_DECODERS[self._def.data_type](payload)
+        except KeyError as err:
+            raise ValueError(f"Unsupported data type: {self._def.data_type}") from err
 
         scaled = raw_value * self._def.scale
         if self._def.precision is not None:
