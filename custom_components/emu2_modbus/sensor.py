@@ -6,6 +6,7 @@ import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta
+import inspect
 import logging
 import struct
 from typing import Any
@@ -130,6 +131,28 @@ def _normalize_precision(value: object | None) -> int | None:
     return int(value)
 
 
+def _build_read_kwargs(method: Callable[..., Any], address: int, count: int, slave_id: int) -> dict[str, int]:
+    """Build Modbus read kwargs across pymodbus API variants."""
+    parameters = inspect.signature(method).parameters
+    id_parameter = next(
+        (name for name in ("slave", "unit", "device_id") if name in parameters),
+        None,
+    )
+    kwargs = {
+        "address": address,
+        "count": count,
+    }
+
+    if id_parameter is None:
+        raise ValueError(
+            "Unsupported pymodbus register read signature; "
+            "expected one of slave/unit/device_id but found none"
+        )
+
+    kwargs[id_parameter] = slave_id
+    return kwargs
+
+
 class Emu2ModbusSensor(SensorEntity):
     """A sensor backed by Modbus TCP registers."""
 
@@ -219,17 +242,18 @@ class Emu2ModbusSensor(SensorEntity):
         except KeyError as err:
             raise ValueError(f"Unsupported data type: {self._def.data_type}") from err
         if self._def.input_type == "holding":
-            result = self._client.read_holding_registers(
-                address=self._def.address,
-                count=register_count,
-                slave=self._def.slave,
-            )
+            read_method = self._client.read_holding_registers
         else:
-            result = self._client.read_input_registers(
+            read_method = self._client.read_input_registers
+
+        result = read_method(
+            **_build_read_kwargs(
+                method=read_method,
                 address=self._def.address,
                 count=register_count,
-                slave=self._def.slave,
+                slave_id=self._def.slave,
             )
+        )
 
         if not hasattr(result, "registers"):
             raise ValueError(
