@@ -131,24 +131,28 @@ def _normalize_precision(value: object | None) -> int | None:
     return int(value)
 
 
-def _build_read_kwargs(method: Callable[..., Any], address: int, count: int, device_id: int) -> dict[str, int]:
+def _build_read_kwargs(method: Callable[..., Any], address: int, count: int, slave_id: int) -> dict[str, int]:
     """Build Modbus read kwargs across pymodbus API variants."""
     parameters = inspect.signature(method).parameters
+    supported_id_parameters = tuple(
+        name for name in ("slave", "unit", "device_id") if name in parameters
+    )
     kwargs = {
         "address": address,
         "count": count,
     }
 
     if "slave" in parameters:
-        kwargs["slave"] = device_id
+        kwargs["slave"] = slave_id
     elif "unit" in parameters:
-        kwargs["unit"] = device_id
+        kwargs["unit"] = slave_id
     elif "device_id" in parameters:
-        kwargs["device_id"] = device_id
+        kwargs["device_id"] = slave_id
     else:
         raise ValueError(
             "Unsupported pymodbus register read signature; "
-            f"expected one of slave/unit/device_id, found: {tuple(parameters)}"
+            "expected one of slave/unit/device_id, "
+            f"found supported id parameters: {supported_id_parameters or ('none',)}"
         )
 
     return kwargs
@@ -252,7 +256,7 @@ class Emu2ModbusSensor(SensorEntity):
                 method=read_method,
                 address=self._def.address,
                 count=register_count,
-                device_id=self._def.slave,
+                slave_id=self._def.slave,
             )
         )
 
