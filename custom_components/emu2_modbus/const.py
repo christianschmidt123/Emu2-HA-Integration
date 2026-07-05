@@ -16,6 +16,8 @@ CONF_SWAP = "swap"
 
 DEFAULT_NAME = "EMU Professional II"
 DEFAULT_PORT = 502
+DEFAULT_SCALE = 1.0
+DEFAULT_SWAP = "none"
 DEFAULT_TIMEOUT = 5.0
 DEFAULT_SLAVE = 1
 
@@ -121,6 +123,7 @@ DEFAULT_SENSORS: list[dict[str, object]] = [
         "unit_of_measurement": "A",
         "device_class": "current",
         "state_class": "measurement",
+        "scale": 1.0,
         "precision": 3,
     },
     {
@@ -134,6 +137,7 @@ DEFAULT_SENSORS: list[dict[str, object]] = [
         "unit_of_measurement": "A",
         "device_class": "current",
         "state_class": "measurement",
+        "scale": 1.0,
         "precision": 3,
     },
     {
@@ -147,6 +151,7 @@ DEFAULT_SENSORS: list[dict[str, object]] = [
         "unit_of_measurement": "A",
         "device_class": "current",
         "state_class": "measurement",
+        "scale": 1.0,
         "precision": 3,
     },
     {
