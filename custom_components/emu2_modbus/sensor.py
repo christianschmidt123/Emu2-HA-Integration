@@ -98,7 +98,7 @@ async def async_setup_entry(
                 swap=str(sensor.get(CONF_SWAP, DEFAULT_SWAP)),
                 slave=slave,
                 scan_interval=int(sensor["scan_interval"]),
-                unit_of_measurement=_normalize_unit(sensor.get("unit_of_measurement")),
+                unit_of_measurement=_normalize_optional(sensor.get("unit_of_measurement")),
                 device_class=_normalize_optional(sensor.get(CONF_DEVICE_CLASS)),
                 state_class=_normalize_optional(sensor.get(CONF_STATE_CLASS)),
                 scale=float(sensor.get(CONF_SCALE, DEFAULT_SCALE)),
@@ -118,10 +118,6 @@ def _normalize_optional(value: object | None) -> str | None:
     if value in (None, ""):
         return None
     return str(value)
-
-
-def _normalize_unit(value: object | None) -> str | None:
-    return _normalize_optional(value)
 
 
 def _normalize_precision(value: object | None) -> int | None:

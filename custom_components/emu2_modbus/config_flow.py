@@ -11,7 +11,7 @@ from homeassistant import config_entries
 from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_TIMEOUT
 from homeassistant.core import HomeAssistant
 
-from .const import DEFAULT_NAME, DEFAULT_PORT, DEFAULT_SLAVE, DEFAULT_TIMEOUT, DOMAIN, CONF_SLAVE
+from .const import CONF_SLAVE, DEFAULT_NAME, DEFAULT_PORT, DEFAULT_SLAVE, DEFAULT_TIMEOUT, DOMAIN
 
 
 def _schema(user_input: dict[str, Any] | None = None) -> vol.Schema:
