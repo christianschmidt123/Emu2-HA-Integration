@@ -6,6 +6,7 @@ import asyncio
 from collections.abc import Callable
 from dataclasses import dataclass
 from datetime import timedelta
+import inspect
 import logging
 import struct
 from typing import Any
@@ -130,6 +131,26 @@ def _normalize_precision(value: object | None) -> int | None:
     return int(value)
 
 
+def _build_read_kwargs(method: Callable[..., Any], address: int, count: int, slave: int) -> dict[str, int]:
+    """Build Modbus read kwargs across pymodbus API variants."""
+    parameters = inspect.signature(method).parameters
+    kwargs = {
+        "address": address,
+        "count": count,
+    }
+
+    if "slave" in parameters:
+        kwargs["slave"] = slave
+    elif "unit" in parameters:
+        kwargs["unit"] = slave
+    elif "device_id" in parameters:
+        kwargs["device_id"] = slave
+    else:
+        raise ValueError("Unsupported pymodbus register read signature")
+
+    return kwargs
+
+
 class Emu2ModbusSensor(SensorEntity):
     """A sensor backed by Modbus TCP registers."""
 
@@ -219,17 +240,18 @@ class Emu2ModbusSensor(SensorEntity):
         except KeyError as err:
             raise ValueError(f"Unsupported data type: {self._def.data_type}") from err
         if self._def.input_type == "holding":
-            result = self._client.read_holding_registers(
-                address=self._def.address,
-                count=register_count,
-                slave=self._def.slave,
-            )
+            read_method = self._client.read_holding_registers
         else:
-            result = self._client.read_input_registers(
+            read_method = self._client.read_input_registers
+
+        result = read_method(
+            **_build_read_kwargs(
+                method=read_method,
                 address=self._def.address,
                 count=register_count,
                 slave=self._def.slave,
             )
+        )
 
         if not hasattr(result, "registers"):
             raise ValueError(
