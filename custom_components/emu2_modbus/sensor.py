@@ -219,7 +219,7 @@ class Emu2ModbusSensor(SensorEntity):
                 value = await self.hass.async_add_executor_job(
                     self._read_sensor_value,
                 )
-            except (ConnectionError, ModbusException, OSError, ValueError, struct.error) as err:
+            except (ConnectionError, ModbusException, OSError, ValueError) as err:
                 _LOGGER.warning(
                     "Failed to update %s (%s): %s",
                     self.entity_id,
