@@ -35,7 +35,8 @@ async def async_setup_entry(hass: HomeAssistant, entry: Emu2ConfigEntry) -> bool
 
 async def async_unload_entry(hass: HomeAssistant, entry: Emu2ConfigEntry) -> bool:
     """Unload a config entry."""
+    client: ModbusTcpClient = entry.runtime_data["client"]
     unload_ok = await hass.config_entries.async_unload_platforms(entry, PLATFORMS)
     if unload_ok:
-        entry.runtime_data["client"].close()
+        client.close()
     return unload_ok
