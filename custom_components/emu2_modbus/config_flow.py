@@ -19,7 +19,7 @@ def _schema(user_input: dict[str, Any] | None = None) -> vol.Schema:
     return vol.Schema(
         {
             vol.Required(CONF_NAME, default=user_input.get(CONF_NAME, DEFAULT_NAME)): str,
-            vol.Required(CONF_HOST, default=user_input.get(CONF_HOST, "192.168.0.76")): str,
+            vol.Required(CONF_HOST, default=user_input.get(CONF_HOST, "")): str,
             vol.Required(CONF_PORT, default=user_input.get(CONF_PORT, DEFAULT_PORT)): int,
             vol.Required(CONF_TIMEOUT, default=user_input.get(CONF_TIMEOUT, DEFAULT_TIMEOUT)): vol.Coerce(float),
             vol.Required(CONF_SLAVE, default=user_input.get(CONF_SLAVE, DEFAULT_SLAVE)): int,

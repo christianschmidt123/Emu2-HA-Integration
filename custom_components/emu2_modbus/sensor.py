@@ -15,7 +15,7 @@ from pymodbus.exceptions import ModbusException
 
 from homeassistant.components.sensor import SensorEntity
 from homeassistant.config_entries import ConfigEntry
-from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_TIMEOUT
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT
 from homeassistant.core import Event, HomeAssistant, callback
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval
@@ -202,12 +202,7 @@ class Emu2ModbusSensor(SensorEntity):
 
     def _read_sensor_value(self) -> float:
         """Read and decode one sensor value from Modbus."""
-        is_connected = (
-            bool(self._client.is_socket_open())
-            if hasattr(self._client, "is_socket_open")
-            else False
-        )
-        if not is_connected and not self._client.connect():
+        if not self._client.is_socket_open() and not self._client.connect():
             raise ConnectionError(
                 f"Modbus TCP connection failed for {self._device_identifier}"
             )

@@ -10,7 +10,7 @@ from homeassistant.config_entries import ConfigEntry
 from homeassistant.const import CONF_HOST, CONF_PORT, CONF_TIMEOUT
 from homeassistant.core import HomeAssistant
 
-from .const import CONF_SLAVE, DOMAIN, PLATFORMS
+from .const import DOMAIN, PLATFORMS
 
 
 type Emu2ConfigEntry = ConfigEntry[dict[str, Any]]
@@ -28,13 +28,7 @@ async def async_setup_entry(hass: HomeAssistant, entry: Emu2ConfigEntry) -> bool
         port=entry.data[CONF_PORT],
         timeout=entry.data[CONF_TIMEOUT],
     )
-    entry.runtime_data = {
-        CONF_HOST: entry.data[CONF_HOST],
-        CONF_PORT: entry.data[CONF_PORT],
-        CONF_TIMEOUT: entry.data[CONF_TIMEOUT],
-        CONF_SLAVE: entry.data[CONF_SLAVE],
-        "client": client,
-    }
+    entry.runtime_data = {"client": client}
     await hass.config_entries.async_forward_entry_setups(entry, PLATFORMS)
     return True
 
