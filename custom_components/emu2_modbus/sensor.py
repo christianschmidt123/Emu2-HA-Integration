@@ -23,6 +23,7 @@ from homeassistant.const import (
     CONF_SCAN_INTERVAL,
     CONF_SENSORS,
     CONF_TIMEOUT,
+    CONF_UNIT_OF_MEASUREMENT,
     CONF_UNIQUE_ID,
 )
 from homeassistant.core import Event, HomeAssistant, callback
@@ -58,7 +59,7 @@ SENSOR_SCHEMA = vol.Schema(
         vol.Optional(CONF_SWAP, default="none"): vol.In(SWAP_TYPES),
         vol.Optional(CONF_SLAVE): cv.positive_int,
         vol.Optional(CONF_SCAN_INTERVAL, default=30): cv.positive_int,
-        vol.Optional("unit_of_measurement"): cv.string,
+        vol.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
         vol.Optional(CONF_DEVICE_CLASS): cv.string,
         vol.Optional(CONF_STATE_CLASS): cv.string,
         vol.Optional(CONF_SCALE, default=1.0): vol.Coerce(float),
@@ -138,7 +139,7 @@ async def async_setup_platform(
             swap=entry[CONF_SWAP],
             slave=entry.get(CONF_SLAVE, config[CONF_SLAVE]),
             scan_interval=entry[CONF_SCAN_INTERVAL],
-            unit_of_measurement=entry.get("unit_of_measurement"),
+            unit_of_measurement=entry.get(CONF_UNIT_OF_MEASUREMENT),
             device_class=entry.get(CONF_DEVICE_CLASS),
             state_class=entry.get(CONF_STATE_CLASS),
             scale=entry[CONF_SCALE],
