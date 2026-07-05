@@ -35,6 +35,10 @@ from .const import (
 )
 
 _LOGGER = logging.getLogger(__name__)
+REGISTER_COUNTS = {
+    "float32": 2,
+    "uint64": 4,
+}
 
 
 type Emu2ConfigEntry = ConfigEntry[dict[str, Any]]
@@ -207,7 +211,10 @@ class Emu2ModbusSensor(SensorEntity):
                 f"Modbus TCP connection failed for {self._device_identifier}"
             )
 
-        register_count = 2 if self._def.data_type == "float32" else 4
+        try:
+            register_count = REGISTER_COUNTS[self._def.data_type]
+        except KeyError as err:
+            raise ValueError(f"Unsupported data type: {self._def.data_type}") from err
         if self._def.input_type == "holding":
             result = self._client.read_holding_registers(
                 address=self._def.address,
