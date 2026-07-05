@@ -236,7 +236,12 @@ class Emu2ModbusSensor(SensorEntity):
 
     def _read_sensor_value(self) -> float:
         """Read and decode one sensor value from Modbus."""
-        if not getattr(self._client, "connected", False):
+        is_connected = (
+            bool(self._client.is_socket_open())
+            if hasattr(self._client, "is_socket_open")
+            else bool(getattr(self._client, "connected", False))
+        )
+        if not is_connected:
             if not self._client.connect():
                 raise ConnectionError(
                     f"Modbus TCP connection failed for {self._device_identifier}"
@@ -259,6 +264,10 @@ class Emu2ModbusSensor(SensorEntity):
         if result.isError():
             raise ValueError(
                 f"Modbus read error at address={self._def.address}, slave={self._def.slave}, input_type={self._def.input_type}: {result}"
+            )
+        if not hasattr(result, "registers"):
+            raise ValueError(
+                f"Modbus read returned no registers at address={self._def.address}, slave={self._def.slave}, input_type={self._def.input_type}"
             )
 
         registers = list(result.registers)
