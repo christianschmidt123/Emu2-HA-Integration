@@ -218,7 +218,12 @@ class Emu2ModbusSensor(SensorEntity):
                     self._read_sensor_value,
                 )
             except Exception as err:  # noqa: BLE001
-                _LOGGER.warning("Failed to update %s: %s", self.entity_id, err)
+                _LOGGER.warning(
+                    "Failed to update %s (%s): %s",
+                    self.entity_id,
+                    type(err).__name__,
+                    err,
+                )
                 self._attr_available = False
                 self.async_write_ha_state()
                 return
@@ -229,7 +234,7 @@ class Emu2ModbusSensor(SensorEntity):
 
     def _read_sensor_value(self) -> float:
         """Read and decode one sensor value from Modbus."""
-        if not self._client.connect():
+        if not bool(getattr(self._client, "connected", False)) and not self._client.connect():
             raise ConnectionError("Modbus TCP connection failed")
 
         register_count = 2 if self._def.data_type == "float32" else 4
@@ -253,7 +258,7 @@ class Emu2ModbusSensor(SensorEntity):
         if self._def.swap == "word":
             registers.reverse()
 
-        payload = b"".join(register.to_bytes(2, byteorder="big", signed=False) for register in registers)
+        payload = b"".join(struct.pack(">H", register) for register in registers)
 
         if self._def.data_type == "float32":
             raw_value = struct.unpack(">f", payload)[0]
