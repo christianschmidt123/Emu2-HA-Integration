@@ -226,13 +226,9 @@ class Emu2ModbusSensor(SensorEntity):
                 slave=self._def.slave,
             )
 
-        if result.isError():
-            raise ValueError(
-                f"Modbus read error at address={self._def.address}, slave={self._def.slave}, input_type={self._def.input_type}: {result}"
-            )
         if not hasattr(result, "registers"):
             raise ValueError(
-                f"Modbus read returned no registers at address={self._def.address}, slave={self._def.slave}, input_type={self._def.input_type}"
+                f"Modbus read failed at address={self._def.address}, slave={self._def.slave}, input_type={self._def.input_type}: {result}"
             )
 
         registers = list(result.registers)

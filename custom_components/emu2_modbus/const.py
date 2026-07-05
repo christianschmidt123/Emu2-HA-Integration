@@ -165,6 +165,7 @@ DEFAULT_SENSORS: list[dict[str, object]] = [
         "unit_of_measurement": "V",
         "device_class": "voltage",
         "state_class": "measurement",
+        "scale": 1.0,
         "precision": 1,
     },
     {
@@ -178,6 +179,7 @@ DEFAULT_SENSORS: list[dict[str, object]] = [
         "unit_of_measurement": "V",
         "device_class": "voltage",
         "state_class": "measurement",
+        "scale": 1.0,
         "precision": 1,
     },
     {
@@ -191,6 +193,7 @@ DEFAULT_SENSORS: list[dict[str, object]] = [
         "unit_of_measurement": "V",
         "device_class": "voltage",
         "state_class": "measurement",
+        "scale": 1.0,
         "precision": 1,
     },
     {
