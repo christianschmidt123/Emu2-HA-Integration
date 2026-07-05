@@ -1,0 +1,14 @@
+{
+  "domain": "emu2_modbus",
+  "name": "EMU2 Modbus",
+  "version": "0.2.0",
+  "documentation": "https://github.com/christianschmidt123/Emu2-HA-Integration",
+  "codeowners": [
+    "@christianschmidt123"
+  ],
+  "config_flow": true,
+  "iot_class": "local_polling",
+  "requirements": [
+    "pymodbus>=3.6.9"
+  ]
+}
