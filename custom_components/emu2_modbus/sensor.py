@@ -134,27 +134,22 @@ def _normalize_precision(value: object | None) -> int | None:
 def _build_read_kwargs(method: Callable[..., Any], address: int, count: int, slave_id: int) -> dict[str, int]:
     """Build Modbus read kwargs across pymodbus API variants."""
     parameters = inspect.signature(method).parameters
-    supported_id_parameters = tuple(
-        name for name in ("slave", "unit", "device_id") if name in parameters
+    id_parameter = next(
+        (name for name in ("slave", "unit", "device_id") if name in parameters),
+        None,
     )
     kwargs = {
         "address": address,
         "count": count,
     }
 
-    if "slave" in parameters:
-        kwargs["slave"] = slave_id
-    elif "unit" in parameters:
-        kwargs["unit"] = slave_id
-    elif "device_id" in parameters:
-        kwargs["device_id"] = slave_id
-    else:
+    if id_parameter is None:
         raise ValueError(
             "Unsupported pymodbus register read signature; "
-            "expected one of slave/unit/device_id, "
-            f"found supported id parameters: {supported_id_parameters or ('none',)}"
+            "expected one of slave/unit/device_id but found none"
         )
 
+    kwargs[id_parameter] = slave_id
     return kwargs
 
 
