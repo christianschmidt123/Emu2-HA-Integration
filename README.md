@@ -224,7 +224,7 @@ sensor:
 ## Unterstützte Sensor-Optionen
 
 - `name` (Pflicht)
-- `address` (Pflicht, 0-basiert)
+- `address` (Pflicht, protokollnahe Register-Adresse 0-basiert; kein automatischer Offset)
 - `input_type`: `holding` oder `input` (Standard: `holding`)
 - `data_type`: `float32` oder `uint64` (Standard: `float32`)
 - `swap`: `none` oder `word` (Standard: `none`)

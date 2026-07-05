@@ -11,6 +11,7 @@ import struct
 from typing import Any
 
 from pymodbus.client import ModbusTcpClient
+from pymodbus.exceptions import ModbusException
 import voluptuous as vol
 
 from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
@@ -177,6 +178,7 @@ class Emu2ModbusSensor(SensorEntity):
         self._def = definition
         self._lock = lock
         self._remove_interval_listener: Callable[[], None] | None = None
+        self._device_identifier = device_identifier
 
         self._attr_name = definition.name
         self._attr_unique_id = definition.unique_id
@@ -217,7 +219,7 @@ class Emu2ModbusSensor(SensorEntity):
                 value = await self.hass.async_add_executor_job(
                     self._read_sensor_value,
                 )
-            except Exception as err:  # noqa: BLE001
+            except (ConnectionError, ModbusException, OSError, ValueError, struct.error) as err:
                 _LOGGER.warning(
                     "Failed to update %s (%s): %s",
                     self.entity_id,
@@ -234,8 +236,11 @@ class Emu2ModbusSensor(SensorEntity):
 
     def _read_sensor_value(self) -> float:
         """Read and decode one sensor value from Modbus."""
-        if not bool(getattr(self._client, "connected", False)) and not self._client.connect():
-            raise ConnectionError("Modbus TCP connection failed")
+        if not getattr(self._client, "connected", False):
+            if not self._client.connect():
+                raise ConnectionError(
+                    f"Modbus TCP connection failed for {self._device_identifier}"
+                )
 
         register_count = 2 if self._def.data_type == "float32" else 4
         if self._def.input_type == "holding":
@@ -252,7 +257,9 @@ class Emu2ModbusSensor(SensorEntity):
             )
 
         if result.isError():
-            raise ValueError(f"Modbus read error: {result}")
+            raise ValueError(
+                f"Modbus read error at address={self._def.address}, slave={self._def.slave}, input_type={self._def.input_type}: {result}"
+            )
 
         registers = list(result.registers)
         if self._def.swap == "word":
