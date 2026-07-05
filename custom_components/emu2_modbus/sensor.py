@@ -12,79 +12,40 @@ from typing import Any
 
 from pymodbus.client import ModbusTcpClient
 from pymodbus.exceptions import ModbusException
-import voluptuous as vol
 
-from homeassistant.components.sensor import PLATFORM_SCHEMA, SensorEntity
-from homeassistant.const import (
-    CONF_ADDRESS,
-    CONF_HOST,
-    CONF_NAME,
-    CONF_PORT,
-    CONF_SCAN_INTERVAL,
-    CONF_SENSORS,
-    CONF_TIMEOUT,
-    CONF_UNIT_OF_MEASUREMENT,
-    CONF_UNIQUE_ID,
-)
+from homeassistant.components.sensor import SensorEntity
+from homeassistant.config_entries import ConfigEntry
+from homeassistant.const import CONF_HOST, CONF_NAME, CONF_PORT, CONF_TIMEOUT
 from homeassistant.core import Event, HomeAssistant, callback
-from homeassistant.helpers import config_validation as cv
 from homeassistant.helpers.entity import DeviceInfo
 from homeassistant.helpers.event import async_track_time_interval
-from homeassistant.helpers.typing import ConfigType, DiscoveryInfoType
+from homeassistant.helpers.entity_platform import AddEntitiesCallback
 
-from . import DOMAIN
+from .const import (
+    CONF_DATA_TYPE,
+    CONF_DEVICE_CLASS,
+    CONF_INPUT_TYPE,
+    CONF_PRECISION,
+    CONF_SCALE,
+    CONF_SLAVE,
+    CONF_STATE_CLASS,
+    CONF_SWAP,
+    DEFAULT_SENSORS,
+    DOMAIN,
+)
 
 _LOGGER = logging.getLogger(__name__)
 
-CONF_DATA_TYPE = "data_type"
-CONF_DEVICE_CLASS = "device_class"
-CONF_INPUT_TYPE = "input_type"
-CONF_PRECISION = "precision"
-CONF_SCALE = "scale"
-CONF_SLAVE = "slave"
-CONF_STATE_CLASS = "state_class"
-CONF_SWAP = "swap"
 
-INPUT_TYPES = {"holding", "input"}
-DATA_TYPES = {"float32", "uint64"}
-SWAP_TYPES = {"none", "word"}
-
-SENSOR_SCHEMA = vol.Schema(
-    {
-        vol.Required(CONF_NAME): cv.string,
-        vol.Optional(CONF_UNIQUE_ID): cv.string,
-        vol.Required(CONF_ADDRESS): cv.positive_int,
-        vol.Optional(CONF_INPUT_TYPE, default="holding"): vol.In(INPUT_TYPES),
-        vol.Optional(CONF_DATA_TYPE, default="float32"): vol.In(DATA_TYPES),
-        vol.Optional(CONF_SWAP, default="none"): vol.In(SWAP_TYPES),
-        vol.Optional(CONF_SLAVE): cv.positive_int,
-        vol.Optional(CONF_SCAN_INTERVAL, default=30): cv.positive_int,
-        vol.Optional(CONF_UNIT_OF_MEASUREMENT): cv.string,
-        vol.Optional(CONF_DEVICE_CLASS): cv.string,
-        vol.Optional(CONF_STATE_CLASS): cv.string,
-        vol.Optional(CONF_SCALE, default=1.0): vol.Coerce(float),
-        vol.Optional(CONF_PRECISION): cv.positive_int,
-    }
-)
-
-PLATFORM_SCHEMA = PLATFORM_SCHEMA.extend(
-    {
-        vol.Optional(CONF_NAME, default="emu_professional_ii"): cv.string,
-        vol.Required(CONF_HOST): cv.string,
-        vol.Optional(CONF_PORT, default=502): cv.port,
-        vol.Optional(CONF_TIMEOUT, default=5): vol.Coerce(float),
-        vol.Optional(CONF_SLAVE, default=1): cv.positive_int,
-        vol.Required(CONF_SENSORS): vol.All(cv.ensure_list, [SENSOR_SCHEMA]),
-    }
-)
+type Emu2ConfigEntry = ConfigEntry[dict[str, Any]]
 
 
 @dataclass(slots=True)
 class SensorDefinition:
     """Definition for one configured sensor."""
 
+    key: str
     name: str
-    unique_id: str | None
     address: int
     input_type: str
     data_type: str
@@ -98,25 +59,14 @@ class SensorDefinition:
     precision: int | None
 
 
-async def async_setup_platform(
+async def async_setup_entry(
     hass: HomeAssistant,
-    config: ConfigType,
-    async_add_entities: Callable[[list[SensorEntity], bool], None],
-    discovery_info: DiscoveryInfoType | None = None,
+    entry: Emu2ConfigEntry,
+    async_add_entities: AddEntitiesCallback,
 ) -> None:
-    """Set up EMU2 Modbus sensors from YAML."""
-    client = ModbusTcpClient(
-        host=config[CONF_HOST],
-        port=config[CONF_PORT],
-        timeout=config[CONF_TIMEOUT],
-    )
-
-    if not await hass.async_add_executor_job(client.connect):
-        _LOGGER.warning(
-            "Initial connection to %s:%s failed; retrying during updates",
-            config[CONF_HOST],
-            config[CONF_PORT],
-        )
+    """Set up EMU2 Modbus sensors from a config entry."""
+    runtime_data = entry.runtime_data
+    client: ModbusTcpClient = runtime_data["client"]
 
     @callback
     def _close_client(_: Event) -> None:
@@ -125,38 +75,53 @@ async def async_setup_platform(
     hass.bus.async_listen_once("homeassistant_stop", _close_client)
 
     lock = asyncio.Lock()
-    device_name = config[CONF_NAME]
-    device_identifier = f"{config[CONF_HOST]}:{config[CONF_PORT]}"
+    device_name = entry.data[CONF_NAME]
+    device_identifier = f"{entry.data[CONF_HOST]}:{entry.data[CONF_PORT]}"
+    slave = entry.data[CONF_SLAVE]
 
-    sensors: list[Emu2ModbusSensor] = []
-    for entry in config[CONF_SENSORS]:
-        definition = SensorDefinition(
-            name=entry[CONF_NAME],
-            unique_id=entry.get(CONF_UNIQUE_ID),
-            address=entry[CONF_ADDRESS],
-            input_type=entry[CONF_INPUT_TYPE],
-            data_type=entry[CONF_DATA_TYPE],
-            swap=entry[CONF_SWAP],
-            slave=entry.get(CONF_SLAVE, config[CONF_SLAVE]),
-            scan_interval=entry[CONF_SCAN_INTERVAL],
-            unit_of_measurement=entry.get(CONF_UNIT_OF_MEASUREMENT),
-            device_class=entry.get(CONF_DEVICE_CLASS),
-            state_class=entry.get(CONF_STATE_CLASS),
-            scale=entry[CONF_SCALE],
-            precision=entry.get(CONF_PRECISION),
+    sensors = [
+        Emu2ModbusSensor(
+            hass=hass,
+            client=client,
+            definition=SensorDefinition(
+                key=str(sensor["key"]),
+                name=str(sensor["name"]),
+                address=int(sensor["address"]),
+                input_type=str(sensor[CONF_INPUT_TYPE]),
+                data_type=str(sensor[CONF_DATA_TYPE]),
+                swap=str(sensor.get(CONF_SWAP, "none")),
+                slave=slave,
+                scan_interval=int(sensor["scan_interval"]),
+                unit_of_measurement=_normalize_unit(sensor.get("unit_of_measurement")),
+                device_class=_normalize_optional(sensor.get(CONF_DEVICE_CLASS)),
+                state_class=_normalize_optional(sensor.get(CONF_STATE_CLASS)),
+                scale=float(sensor.get(CONF_SCALE, 1.0)),
+                precision=_normalize_precision(sensor.get(CONF_PRECISION)),
+            ),
+            lock=lock,
+            device_name=device_name,
+            device_identifier=device_identifier,
         )
-        sensors.append(
-            Emu2ModbusSensor(
-                hass=hass,
-                client=client,
-                definition=definition,
-                lock=lock,
-                device_name=device_name,
-                device_identifier=device_identifier,
-            )
-        )
+        for sensor in DEFAULT_SENSORS
+    ]
 
     async_add_entities(sensors)
+
+
+def _normalize_optional(value: object | None) -> str | None:
+    if value in (None, ""):
+        return None
+    return str(value)
+
+
+def _normalize_unit(value: object | None) -> str | None:
+    return _normalize_optional(value)
+
+
+def _normalize_precision(value: object | None) -> int | None:
+    if value is None:
+        return None
+    return int(value)
 
 
 class Emu2ModbusSensor(SensorEntity):
@@ -182,7 +147,7 @@ class Emu2ModbusSensor(SensorEntity):
         self._device_identifier = device_identifier
 
         self._attr_name = definition.name
-        self._attr_unique_id = definition.unique_id
+        self._attr_unique_id = f"{device_identifier}_{definition.key}"
         self._attr_native_unit_of_measurement = definition.unit_of_measurement
         self._attr_device_class = definition.device_class
         self._attr_state_class = definition.state_class
@@ -240,13 +205,12 @@ class Emu2ModbusSensor(SensorEntity):
         is_connected = (
             bool(self._client.is_socket_open())
             if hasattr(self._client, "is_socket_open")
-            else bool(getattr(self._client, "connected", False))
+            else False
         )
-        if not is_connected:
-            if not self._client.connect():
-                raise ConnectionError(
-                    f"Modbus TCP connection failed for {self._device_identifier}"
-                )
+        if not is_connected and not self._client.connect():
+            raise ConnectionError(
+                f"Modbus TCP connection failed for {self._device_identifier}"
+            )
 
         register_count = 2 if self._def.data_type == "float32" else 4
         if self._def.input_type == "holding":

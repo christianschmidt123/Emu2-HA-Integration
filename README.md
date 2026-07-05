@@ -1,235 +1,53 @@
 # Emu2-HA-Integration
 
-Home Assistant HACS-Integration für den EMU Professional II (Modbus TCP).
+Home Assistant HACS-Integration für den EMU Professional II (Modbus TCP) mit UI-Setup.
 
 ## Installation (HACS)
 
 1. Dieses Repository in HACS als benutzerdefiniertes Repository hinzufügen.
 2. Integration **EMU2 Modbus** installieren.
 3. Home Assistant neu starten.
+4. Unter **Einstellungen → Geräte & Dienste → Integration hinzufügen** nach **EMU2 Modbus** suchen.
+5. Host, Port, Timeout und Slave-ID eintragen.
 
-## Konfiguration (`configuration.yaml`)
+## UI-Konfiguration
 
-```yaml
-sensor:
-  - platform: emu2_modbus
-    name: emu_professional_ii
-    host: 192.168.0.76
-    port: 502
-    timeout: 5
-    slave: 1
+Beim UI-Setup werden folgende Verbindungsdaten abgefragt:
 
-    sensors:
-      - name: "EMU Wirkenergie Import"
-        unique_id: emu_energy_import
-        address: 5999
-        input_type: holding
-        data_type: uint64
-        scan_interval: 30
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 0.001
-        precision: 3
+- `name`
+- `host`
+- `port` (Standard: `502`)
+- `timeout` (Standard: `5`)
+- `slave` (Standard: `1`)
 
-      - name: "EMU Wirkenergie Export"
-        unique_id: emu_energy_export
-        address: 6019
-        input_type: holding
-        data_type: uint64
-        scan_interval: 30
-        unit_of_measurement: kWh
-        device_class: energy
-        state_class: total_increasing
-        scale: 0.001
-        precision: 3
+Die Sensoren aus deiner ursprünglichen YAML sind fest in der Integration hinterlegt und werden nach erfolgreicher Einrichtung automatisch angelegt.
 
-      - name: "EMU Wirkleistung Gesamt"
-        unique_id: emu_power_total
-        address: 8999
-        input_type: holding
-        data_type: float32
-        scan_interval: 5
-        unit_of_measurement: kW
-        device_class: power
-        state_class: measurement
-        scale: 0.001
-        precision: 3
+## Enthaltene Sensoren
 
-      - name: "EMU Wirkleistung L1"
-        unique_id: emu_power_l1
-        address: 9001
-        input_type: holding
-        data_type: float32
-        scan_interval: 5
-        unit_of_measurement: kW
-        device_class: power
-        state_class: measurement
-        scale: 0.001
-        precision: 3
+- EMU Wirkenergie Import
+- EMU Wirkenergie Export
+- EMU Wirkleistung Gesamt
+- EMU Wirkleistung L1
+- EMU Wirkleistung L2
+- EMU Wirkleistung L3
+- EMU Blindleistung Gesamt
+- EMU Strom L1
+- EMU Strom L2
+- EMU Strom L3
+- EMU Spannung L1-N
+- EMU Spannung L2-N
+- EMU Spannung L3-N
+- EMU Leistungsfaktor L1
+- EMU Leistungsfaktor L2
+- EMU Leistungsfaktor L3
+- EMU Netzfrequenz
 
-      - name: "EMU Wirkleistung L2"
-        unique_id: emu_power_l2
-        address: 9003
-        input_type: holding
-        data_type: float32
-        scan_interval: 5
-        unit_of_measurement: kW
-        device_class: power
-        state_class: measurement
-        scale: 0.001
-        precision: 3
+## Verwendete Registerdefinitionen
 
-      - name: "EMU Wirkleistung L3"
-        unique_id: emu_power_l3
-        address: 9005
-        input_type: holding
-        data_type: float32
-        scan_interval: 5
-        unit_of_measurement: kW
-        device_class: power
-        state_class: measurement
-        scale: 0.001
-        precision: 3
+Die Integration nutzt intern diese aus deiner YAML abgeleiteten Werte:
 
-      - name: "EMU Blindleistung Gesamt"
-        unique_id: emu_reactive_power_total
-        address: 9009
-        input_type: holding
-        data_type: float32
-        scan_interval: 10
-        unit_of_measurement: kvar
-        state_class: measurement
-        scale: 0.001
-        precision: 3
-
-      - name: "EMU Strom L1"
-        unique_id: emu_current_l1
-        address: 9100
-        input_type: holding
-        data_type: float32
-        swap: word
-        scan_interval: 5
-        unit_of_measurement: A
-        device_class: current
-        state_class: measurement
-        precision: 3
-
-      - name: "EMU Strom L2"
-        unique_id: emu_current_l2
-        address: 9102
-        input_type: holding
-        data_type: float32
-        swap: word
-        scan_interval: 5
-        unit_of_measurement: A
-        device_class: current
-        state_class: measurement
-        precision: 3
-
-      - name: "EMU Strom L3"
-        unique_id: emu_current_l3
-        address: 9104
-        input_type: holding
-        data_type: float32
-        swap: word
-        scan_interval: 5
-        unit_of_measurement: A
-        device_class: current
-        state_class: measurement
-        precision: 3
-
-      - name: "EMU Spannung L1-N"
-        unique_id: emu_voltage_l1
-        address: 9198
-        input_type: holding
-        data_type: float32
-        swap: word
-        scan_interval: 10
-        unit_of_measurement: V
-        device_class: voltage
-        state_class: measurement
-        precision: 1
-
-      - name: "EMU Spannung L2-N"
-        unique_id: emu_voltage_l2
-        address: 9200
-        input_type: holding
-        data_type: float32
-        swap: word
-        scan_interval: 10
-        unit_of_measurement: V
-        device_class: voltage
-        state_class: measurement
-        precision: 1
-
-      - name: "EMU Spannung L3-N"
-        unique_id: emu_voltage_l3
-        address: 9202
-        input_type: holding
-        data_type: float32
-        swap: word
-        scan_interval: 10
-        unit_of_measurement: V
-        device_class: voltage
-        state_class: measurement
-        precision: 1
-
-      - name: "EMU Leistungsfaktor L1"
-        unique_id: emu_pf_l1
-        address: 9298
-        input_type: holding
-        data_type: float32
-        swap: word
-        scan_interval: 10
-        unit_of_measurement: ""
-        state_class: measurement
-        precision: 3
-
-      - name: "EMU Leistungsfaktor L2"
-        unique_id: emu_pf_l2
-        address: 9300
-        input_type: holding
-        data_type: float32
-        swap: word
-        scan_interval: 10
-        unit_of_measurement: ""
-        state_class: measurement
-        precision: 3
-
-      - name: "EMU Leistungsfaktor L3"
-        unique_id: emu_pf_l3
-        address: 9302
-        input_type: holding
-        data_type: float32
-        swap: word
-        scan_interval: 10
-        unit_of_measurement: ""
-        state_class: measurement
-        precision: 3
-
-      - name: "EMU Netzfrequenz"
-        unique_id: emu_frequency
-        address: 9308
-        input_type: holding
-        data_type: float32
-        swap: word
-        scan_interval: 30
-        unit_of_measurement: Hz
-        device_class: frequency
-        state_class: measurement
-        precision: 3
-```
-
-## Unterstützte Sensor-Optionen
-
-- `name` (Pflicht)
-- `address` (Pflicht, protokollnahe Register-Adresse 0-basiert; kein automatischer Offset)
-- `input_type`: `holding` oder `input` (Standard: `holding`)
-- `data_type`: `float32` oder `uint64` (Standard: `float32`)
-- `swap`: `none` oder `word` (Standard: `none`)
-- `slave` (Standard vom Plattformwert `slave`)
-- `scan_interval` in Sekunden
-- `unit_of_measurement`, `device_class`, `state_class`
-- `scale` (Standard: `1.0`)
-- `precision`
+- Adressen sind protokollnahe Register-Adressen, 0-basiert, ohne automatischen Offset.
+- Unterstützte Registerarten: `holding`
+- Unterstützte Datentypen: `float32`, `uint64`
+- Unterstütztes Byte-/Word-Swapping: `swap: word`
+- Skalierung und Präzision entsprechen der gelieferten YAML-Konfiguration.

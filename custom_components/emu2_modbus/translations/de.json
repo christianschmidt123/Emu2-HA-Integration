@@ -1,0 +1,24 @@
+{
+  "title": "EMU2 Modbus",
+  "config": {
+    "step": {
+      "user": {
+        "title": "EMU2 Modbus einrichten",
+        "description": "Verbindungsdaten für den EMU Professional II eingeben.",
+        "data": {
+          "name": "Name",
+          "host": "Host",
+          "port": "Port",
+          "timeout": "Timeout",
+          "slave": "Slave-ID"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Verbindung zum Modbus-Gerät fehlgeschlagen"
+    },
+    "abort": {
+      "already_configured": "Dieses Gerät ist bereits eingerichtet"
+    }
+  }
+}
